@@ -5,7 +5,7 @@ import aiofiles
 from celery.result import AsyncResult
 from fastapi import FastAPI, UploadFile
 
-from worker import text_to_image, image_to_image, inpaint_image
+from worker import text_to_image, image_to_image
 
 app = FastAPI()
 
@@ -77,33 +77,4 @@ async def diffusers_img2img(
         "task_id": task.id,
         "prompt": prompt,
         "init_image": init_image_path,
-    }
-
-
-@app.post("/diffusers/inpaint")
-async def diffusers_inpaint(
-    init_image: UploadFile,
-    mask_image: UploadFile,
-    prompt: str,
-    strength: float = 0.8,
-    guidance_scale: float = 7.5,
-    num_inference_steps: int = 50,
-):
-    init_image_path = await save_upload_file(init_image)
-    mask_image_path = await save_upload_file(mask_image)
-
-    task = inpaint_image.delay(
-        init_image=init_image_path,
-        mask_image=mask_image_path,
-        prompt=prompt,
-        strength=strength,
-        guidance_scale=guidance_scale,
-        num_inference_steps=num_inference_steps,
-    )
-
-    return {
-        "task_id": task.id,
-        "prompt": prompt,
-        "init_image": init_image_path,
-        "mask_image": mask_image_path,
     }
