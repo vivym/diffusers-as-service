@@ -47,11 +47,7 @@ async def diffusers_text2img(
 
 
 async def save_upload_file(upload_file: UploadFile) -> str:
-    file_name = f"{uuid4()}"
-    ext = Path(upload_file.filename).suffix
-    if ext:
-        file_name += f".{ext}"
-
+    file_name = f"{uuid4()}{Path(upload_file.filename).suffix}"
     async with aiofiles.open(f"/uploaded_images/{file_name}", "wb") as f:
         while content := await upload_file.read(4 * 1024):
             await f.write(content)
@@ -109,5 +105,5 @@ async def diffusers_inpaint(
         "task_id": task.id,
         "prompt": prompt,
         "init_image": init_image_path,
-        "mask_image": mask_image,
+        "mask_image": mask_image_path,
     }

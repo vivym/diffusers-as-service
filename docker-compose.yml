@@ -34,6 +34,7 @@ services:
     volumes:
       - ./model-deploy/config.properties:/home/model-server/config.properties
       - ./model-deploy/model-store:/home/model-server/model-store
+      - ./model-deploy/logs:/home/model-server/logs
       - ./generated_images:/home/model-server/generated_images
     deploy:
       resources:

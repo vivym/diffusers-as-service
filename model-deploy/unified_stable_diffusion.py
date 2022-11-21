@@ -137,7 +137,7 @@ class UnifiedStableDiffusionPipeline(DiffusionPipeline):
             else:
                 result = self.inpaint(
                     prompt=prompt,
-                    init_image=init_image,
+                    image=init_image,
                     mask_image=mask_image,
                     strength=strength,
                     num_inference_steps=num_inference_steps,
