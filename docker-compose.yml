@@ -1,5 +1,44 @@
 version: "3.8"
 
 services:
+  api:
+    build:
+      context: ./api
+      dockerfile: api.Dockerfile
+    ports:
+      - 127.0.0.1:8000:80
+    volumes:
+      - ./uploaded_images:/uploaded_images
+    depends_on:
+      - redis
+      - torchserve
+
+  worker:
+    build:
+      context: ./api
+      dockerfile: worker.Dockerfile
+    volumes:
+      - ./uploaded_images:/uploaded_images
+    depends_on:
+      - redis
+
   redis:
     image: redis:7-alpine
+
+  torchserve:
+    image: pytorch/torchserve:latest-gpu
+    ports:
+      - 127.0.0.1:8080:8080
+      - 127.0.0.1:8081:8081
+      - 127.0.0.1:8082:8082
+    volumes:
+      - ./model-deploy/config.properties:/home/model-server/config.properties
+      - ./model-deploy/model-store:/home/model-server/model-store
+      - ./generated_images:/home/model-server/generated_images
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["2", "3", "4", "5"]
+              capabilities: [gpu]

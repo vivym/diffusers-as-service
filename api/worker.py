@@ -3,8 +3,8 @@ from celery import Celery
 
 app = Celery(
     __name__,
-    broker="redis://localhost",
-    backend="redis://localhost",
+    broker="redis://redis",
+    backend="redis://redis",
 )
 
 
@@ -16,7 +16,7 @@ def text_to_image(
     num_inference_steps: int = 50,
 ) -> str:
     rsp = requests.post(
-        "http://localhost:8080/predictions/stable-diffusion",
+        "http://torchserve:8080/predictions/stable-diffusion",
         data={
             "prompt": prompt,
             "strength": strength,
@@ -36,7 +36,7 @@ def image_to_image(
     num_inference_steps: int = 50,
 ) -> str:
     rsp = requests.post(
-        "http://localhost:8080/predictions/stable-diffusion",
+        "http://torchserve:8080/predictions/stable-diffusion",
         data={
             "prompt": prompt,
             "strength": strength,
@@ -44,7 +44,7 @@ def image_to_image(
             "num_inference_steps": num_inference_steps,
         },
         files={
-            "init_image": open(f"uploaded_images/{init_image}", "rb"),
+            "init_image": open(f"/uploaded_images/{init_image}", "rb"),
         }
     )
     return rsp.text
@@ -60,7 +60,7 @@ def inpaint_image(
     num_inference_steps: int = 50,
 ) -> str:
     rsp = requests.post(
-        "http://localhost:8080/predictions/stable-diffusion",
+        "http://torchserve:8080/predictions/stable-diffusion",
         data={
             "prompt": prompt,
             "strength": strength,
@@ -68,8 +68,8 @@ def inpaint_image(
             "num_inference_steps": num_inference_steps,
         },
         files={
-            "init_image": open(f"uploaded_images/{init_image}", "rb"),
-            "mask_image": open(f"uploaded_images/{mask_image}", "rb"),
+            "init_image": open(f"/uploaded_images/{init_image}", "rb"),
+            "mask_image": open(f"/uploaded_images/{mask_image}", "rb"),
         }
     )
     return rsp.text

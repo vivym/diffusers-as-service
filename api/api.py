@@ -52,7 +52,7 @@ async def save_upload_file(upload_file: UploadFile) -> str:
     if ext:
         file_name += f".{ext}"
 
-    async with aiofiles.open(f"uploaded_images/{file_name}", "wb") as f:
+    async with aiofiles.open(f"/uploaded_images/{file_name}", "wb") as f:
         while content := await upload_file.read(4 * 1024):
             await f.write(content)
 
