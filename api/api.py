@@ -1,3 +1,4 @@
+import json
 from uuid import uuid4
 from pathlib import Path
 
@@ -23,10 +24,17 @@ app.mount("/static", StaticFiles(directory="/static"), name="static")
 async def get_task_status(task_id: str):
     task_result = AsyncResult(task_id)
 
+    result = task_result.result
+    if isinstance(result, str):
+        try:
+            result = json.loads(result)
+        except:
+            ...
+
     return {
         "task_id": task_id,
         "status": task_result.status,
-        "result": task_result.result,
+        "result": result,
     }
 
 
