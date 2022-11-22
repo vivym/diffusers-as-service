@@ -22,10 +22,6 @@ app.mount("/static", StaticFiles(directory="/static"), name="static")
 @app.get("/tasks/{task_id}")
 async def get_task_status(task_id: str):
     task_result = AsyncResult(task_id)
-    status = task_result.status
-    result = task_result.result
-    if status == "SUCCESS" and isinstance(result, str):
-        result = "/static/" + result
 
     return {
         "task_id": task_id,
@@ -40,12 +36,18 @@ async def diffusers_text2img(
     strength: float = 0.8,
     guidance_scale: float = 7.5,
     num_inference_steps: int = 50,
+    width: int = 512,
+    height: int = 512,
+    num_outputs: int = 1,
 ):
     task = text_to_image.delay(
         prompt=prompt,
         strength=strength,
         guidance_scale=guidance_scale,
         num_inference_steps=num_inference_steps,
+        width=width,
+        height=height,
+        num_outputs=num_outputs,
     )
 
     return {
@@ -70,6 +72,9 @@ async def diffusers_img2img(
     strength: float = 0.8,
     guidance_scale: float = 7.5,
     num_inference_steps: int = 50,
+    width: int = 512,
+    height: int = 512,
+    num_outputs: int = 1,
 ):
     init_image_path = await save_upload_file(init_image)
 
@@ -79,6 +84,9 @@ async def diffusers_img2img(
         strength=strength,
         guidance_scale=guidance_scale,
         num_inference_steps=num_inference_steps,
+        width=width,
+        height=height,
+        num_outputs=num_outputs,
     )
 
     return {

@@ -8,6 +8,7 @@ services:
     ports:
       - 8000:80
     volumes:
+      - ./api:/code
       - ./uploaded_images:/uploaded_images
       - ./generated_images:/static
     depends_on:
@@ -19,6 +20,7 @@ services:
       context: ./api
       dockerfile: worker.Dockerfile
     volumes:
+      - ./api:/code
       - ./uploaded_images:/uploaded_images
     depends_on:
       - redis

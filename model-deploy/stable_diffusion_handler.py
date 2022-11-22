@@ -65,6 +65,9 @@ class DiffusersHandler(BaseHandler, ABC):
             prompt = data.get("prompt")
             init_image = data.get("init_image")
             mask_image = data.get("mask_image")
+            num_outputs = data.get("num_outputs")
+            height = data.get("height")
+            width = data.get("width")
             strength = data.get("strength") # 0.8
             guidance_scale = data.get("guidance_scale") # 7.5
             num_inference_steps = data.get("num_inference_steps")   # 50
@@ -72,6 +75,9 @@ class DiffusersHandler(BaseHandler, ABC):
             logger.info(f"prompt: {prompt}, {type(prompt)}")
             logger.info(f"init_image: {type(init_image)}")
             logger.info(f"mask_image: {type(mask_image)}")
+            logger.info(f"num_outputs: {num_outputs} {type(num_outputs)}")
+            logger.info(f"height: {height} {type(height)}")
+            logger.info(f"width: {width} {type(width)}")
             logger.info(f"strength: {strength}, {type(strength)}")
             logger.info(f"guidance_scale: {guidance_scale}, {type(guidance_scale)}")
             logger.info(f"num_inference_steps: {num_inference_steps}, {type(num_inference_steps)}")
@@ -86,6 +92,24 @@ class DiffusersHandler(BaseHandler, ABC):
             if mask_image is not None:
                 mask_image = Image.open(io.BytesIO(mask_image)).convert("RGB")
                 mask_image = mask_image.resize((768, 512))
+
+            if isinstance(num_outputs, (bytes, bytearray)):
+                num_outputs = num_outputs.decode("utf-8")
+                num_outputs = int(num_outputs)
+            else:
+                num_outputs = 1
+
+            if isinstance(height, (bytes, bytearray)):
+                height = height.decode("utf-8")
+                height = int(height)
+            else:
+                height = 512
+
+            if isinstance(width, (bytes, bytearray)):
+                width = width.decode("utf-8")
+                width = int(width)
+            else:
+                width = 512
 
             if isinstance(strength, (bytes, bytearray)):
                 strength = strength.decode("utf-8")
@@ -106,7 +130,10 @@ class DiffusersHandler(BaseHandler, ABC):
                 num_inference_steps = 50
 
             logger.info("Received text: '%s'", prompt)
-            inputs.append((prompt, init_image, mask_image, strength, guidance_scale, num_inference_steps))
+            inputs.append((
+                prompt, init_image, mask_image, num_outputs, height, width,
+                strength, guidance_scale, num_inference_steps,
+            ))
         return inputs
 
     def inference(self, inputs):
@@ -118,15 +145,22 @@ class DiffusersHandler(BaseHandler, ABC):
         """
         # Handling inference for sequence_classification.
         images = []
-        for prompt, init_image, mask_image, strength, guidance_scale, num_inference_steps in inputs:
-            images += self.pipe(
-                prompt=[prompt],
-                init_image=init_image,
-                mask_image=mask_image,
-                strength=strength,
-                guidance_scale=guidance_scale,
-                num_inference_steps=num_inference_steps,
-            ).images
+        for (
+            prompt, init_image, mask_image, num_outputs, height, width,
+            strength, guidance_scale, num_inference_steps,
+         ) in inputs:
+            images.append(
+                self.pipe(
+                    prompt=[prompt] * num_outputs,
+                    init_image=init_image,
+                    mask_image=mask_image,
+                    height=height,
+                    width=width,
+                    strength=strength,
+                    guidance_scale=guidance_scale,
+                    num_inference_steps=num_inference_steps,
+                ).images
+            )
 
         logger.info("Generated image: '%s'", images)
         return images
@@ -138,21 +172,24 @@ class DiffusersHandler(BaseHandler, ABC):
         Returns:
             (list): Returns a list of the images.
         """
-        images = []
-        for image in inference_output:
-            try:
-                m = hashlib.sha1()
-                with io.BytesIO() as memf:
-                    image.save(memf, "PNG")
-                    data = memf.getvalue()
-                    m.update(data)
+        results = []
+        for images in inference_output:
+            paths = []
+            for image in images:
+                try:
+                    m = hashlib.sha1()
+                    with io.BytesIO() as memf:
+                        image.save(memf, "PNG")
+                        data = memf.getvalue()
+                        m.update(data)
 
-                file_name = f"{m.hexdigest()}.png"
-                with open(f"/home/model-server/generated_images/{file_name}", "wb") as f:
-                    f.write(data)
-                images.append(file_name)
-            except Exception as e:
-                logger.error(f"Postprocess error: {e}")
-                images.append(None)
+                    file_name = f"{m.hexdigest()}.png"
+                    with open(f"/home/model-server/generated_images/{file_name}", "wb") as f:
+                        f.write(data)
+                    paths.append(f"/static/{file_name}")
+                except Exception as e:
+                    logger.error(f"Postprocess error: {e}")
+                    paths.append(None)
+            results.append(paths)
 
-        return images
+        return results
