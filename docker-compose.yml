@@ -9,6 +9,7 @@ services:
       - 127.0.0.1:8000:80
     volumes:
       - ./uploaded_images:/uploaded_images
+      - ./generated_images:/static
     depends_on:
       - redis
       - torchserve

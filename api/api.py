@@ -4,6 +4,7 @@ from pathlib import Path
 import aiofiles
 from celery.result import AsyncResult
 from fastapi import FastAPI, UploadFile
+from fastapi.staticfiles import StaticFiles
 
 from worker import text_to_image, image_to_image
 
@@ -15,9 +16,16 @@ async def root():
     return {"message": "Hello World"}
 
 
+app.mount("/static", StaticFiles(directory="/static"), name="static")
+
+
 @app.get("/tasks/{task_id}")
 async def get_task_status(task_id: str):
     task_result = AsyncResult(task_id)
+    status = task_result.status
+    result = task_result.result
+    if status == "SUCCESS" and isinstance(result, str):
+        result = "/static/" + result
 
     return {
         "task_id": task_id,
