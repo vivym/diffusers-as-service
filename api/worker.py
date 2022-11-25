@@ -1,5 +1,9 @@
 import requests
 from celery import Celery
+from pymongo import MongoClient
+
+client = MongoClient('mongodb://root:example@mongo:27017/')
+db = client.stable_diffusion
 
 app = Celery(
     __name__,
@@ -30,6 +34,18 @@ def text_to_image(
             "num_outputs": num_outputs,
         },
     )
+
+    db.text_to_image.insert_one({
+        "prompt": prompt,
+        "strength": strength,
+        "guidance_scale": guidance_scale,
+        "num_inference_steps": num_inference_steps,
+        "width": width,
+        "height": height,
+        "num_outputs": num_outputs,
+        "results": rsp.text,
+    })
+
     return rsp.text
 
 
