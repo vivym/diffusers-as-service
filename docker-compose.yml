@@ -6,7 +6,7 @@ services:
       context: ./api
       dockerfile: api.Dockerfile
     ports:
-      - 8000:80
+      - 127.0.0.1:8000:80
     volumes:
       - ./api:/code
       - ./uploaded_images:/uploaded_images
